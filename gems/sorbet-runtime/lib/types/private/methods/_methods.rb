@@ -6,12 +6,17 @@ module T::Private::Methods
   @signatures_by_method = {}
   @sig_wrappers = {}
   @sigs_that_raised = {}
+  # the info about whether a method is final is not stored in a DeclBuilder nor a Signature, but instead right here.
+  # this is because final checks are special:
+  # - they are done possibly before any sig block has run.
+  # - they are done even if the method being defined doesn't have a sig.
+  @final_methods = Set.new
 
   ARG_NOT_PROVIDED = Object.new
   PROC_TYPE = Object.new
 
-  ALLOWED_SIG_ARGS = [].freeze
-  DeclarationBlock = Struct.new(:mod, :loc, :blk)
+  ALLOWED_SIG_ARGS = [:final].freeze
+  DeclarationBlock = Struct.new(:mod, :loc, :blk, :final)
 
   def self.declare_sig(mod, args, &blk)
     install_hooks(mod)
@@ -21,6 +26,7 @@ module T::Private::Methods
       raise "You called sig twice without declaring a method inbetween"
     end
 
+    final = false
     ALLOWED_SIG_ARGS.each do |allowed|
       old_len = args.length
       args.select! { |a| a != allowed }
@@ -31,6 +37,10 @@ module T::Private::Methods
       if diff > 1
         raise "Duplicate argument to `sig`: #{allowed}"
       end
+      case allowed
+      when :final
+        final = true
+      end
     end
     if args.length != 0
       raise "Some arguments to `sig` were invalid: #{args}"
@@ -38,7 +48,7 @@ module T::Private::Methods
 
     loc = caller_locations(2, 1).first
 
-    T::Private::DeclState.current.active_declaration = DeclarationBlock.new(mod, loc, blk)
+    T::Private::DeclState.current.active_declaration = DeclarationBlock.new(mod, loc, blk, final)
 
     nil
   end
@@ -122,14 +132,54 @@ module T::Private::Methods
     @signatures_by_method[key]
   end
 
+  # a module A such that:
+  #   if A is included or extended by a module B,
+  #   then we want B to have the hooks installed on itself
+  # should extend this module.
+  module VirallyInstallHooks
+    def included(arg)
+      super(arg)
+      if arg.is_a?(Module)
+        ::T::Private::Methods.install_hooks(arg)
+      end
+    end
+
+    def extended(arg)
+      super(arg)
+      if arg.is_a?(Module)
+        ::T::Private::Methods.install_hooks(arg)
+      end
+    end
+  end
+
+  # this ensures there is not a final method named method_name already defined on one of mod's ancestors.
+  def self._check_final_ancestors(mod, method_name)
+    mod.ancestors.each do |ancestor|
+      (ancestor.instance_methods(false) + ancestor.private_instance_methods(false)).each do |ancestor_method|
+        if ancestor_method == method_name && final_method?(ancestor.instance_method(method_name))
+          raise "`#{ancestor.name}##{method_name}` was declared as final and cannot be overridden in `#{mod.name}`"
+        end
+      end
+    end
+  end
+
+  private_class_method def self.final_method?(method)
+    @final_methods.include?(method_to_key(method))
+  end
+
   # Only public because it needs to get called below inside the replace_method blocks below.
   def self._on_method_added(hook_mod, method_name, is_singleton_method: false)
     current_declaration = T::Private::DeclState.current.active_declaration
-    return if current_declaration.nil?
-    T::Private::DeclState.current.reset!
-
     mod = is_singleton_method ? hook_mod.singleton_class : hook_mod
     original_method = mod.instance_method(method_name)
+
+    if final_method?(original_method)
+      raise "`#{mod.name}##{method_name}` was declared as final and cannot be redefined"
+    end
+    _check_final_ancestors(mod, method_name)
+
+    return if current_declaration.nil?
+    T::Private::DeclState.current.reset!
 
     sig_block = lambda do
       T::Private::Methods.run_sig(hook_mod, method_name, original_method, current_declaration)
@@ -177,7 +227,12 @@ module T::Private::Methods
     end
 
     new_method = mod.instance_method(method_name)
-    @sig_wrappers[method_to_key(new_method)] = sig_block
+    key = method_to_key(new_method)
+    @sig_wrappers[key] = sig_block
+    if current_declaration.final
+      @final_methods.add(key)
+      mod.extend(VirallyInstallHooks)
+    end
   end
 
   def self.sig_error(loc, message)
@@ -315,6 +370,19 @@ module T::Private::Methods
   def self.install_hooks(mod)
     return if @installed_hooks.include?(mod)
     @installed_hooks << mod
+
+    orig_include = T::Private::ClassUtils.replace_method(mod.singleton_class, :include) do |arg|
+      orig_include.bind(self).call(arg)
+      arg.instance_methods.each do |method_name|
+        ::T::Private::Methods._check_final_ancestors(self, method_name)
+      end
+    end
+    orig_extend = T::Private::ClassUtils.replace_method(mod.singleton_class, :extend) do |arg|
+      orig_extend.bind(self).call(arg)
+      arg.instance_methods.each do |method_name|
+        ::T::Private::Methods._check_final_ancestors(self.singleton_class, method_name)
+      end
+    end
 
     if mod.singleton_class?
       install_singleton_method_added_hook(mod)
