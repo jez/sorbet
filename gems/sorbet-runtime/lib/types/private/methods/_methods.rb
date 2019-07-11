@@ -140,12 +140,14 @@ module T::Private::Methods
     def included(arg)
       ret = super(arg)
       ::T::Private::Methods.install_hooks(arg)
+      ::T::Private::Methods._check_final_ancestors(arg, self.instance_methods)
       ret
     end
 
     def extended(arg)
       ret = super(arg)
       ::T::Private::Methods.install_hooks(arg)
+      ::T::Private::Methods._check_final_ancestors(arg.singleton_class, self.instance_methods)
       ret
     end
   end
