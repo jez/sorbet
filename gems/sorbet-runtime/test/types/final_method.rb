@@ -209,4 +209,66 @@ class Opus::Types::Test::FinalMethodTest < Critic::Unit::UnitTest
     end
     assert_includes(err.message, "was declared as final and cannot be overridden")
   end
+
+  it "permits calling final methods" do
+    m = Module.new do
+      extend T::Sig
+      sig(:final) {void}
+      def self.n0; end
+      sig(:final) {params(x: Integer).void}
+      def self.n1(x); end
+      sig(:final) {params(x: Integer, y: Integer).void}
+      def self.n2(x, y); end
+      sig(:final) {params(x: Integer, y: Integer, z: Integer).void}
+      def self.n3(x, y, z); end
+    end
+    m.n0
+    m.n1 1
+    m.n2 1, 2
+    m.n3 1, 2, 3
+  end
+
+  it "calls a user-defined included" do
+    m = Module.new do
+      @calls = 0
+      extend T::Sig
+      sig(:final) {returns(Integer)}
+      def self.calls
+        @calls
+      end
+      def self.included(x)
+        @calls += 1
+      end
+    end
+    Class.new do
+      include m
+    end
+    assert_equal(1, m.calls)
+    Class.new do
+      include m
+    end
+    assert_equal(2, m.calls)
+  end
+
+  it "calls a user-defined extended" do
+    m = Module.new do
+      @calls = 0
+      extend T::Sig
+      sig(:final) {returns(Integer)}
+      def self.calls
+        @calls
+      end
+      def self.extended(x)
+        @calls += 1
+      end
+    end
+    Class.new do
+      extend m
+    end
+    assert_equal(1, m.calls)
+    Class.new do
+      extend m
+    end
+    assert_equal(2, m.calls)
+  end
 end

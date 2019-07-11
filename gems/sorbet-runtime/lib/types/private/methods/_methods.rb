@@ -174,6 +174,11 @@ module T::Private::Methods
 
   # Only public because it needs to get called below inside the replace_method blocks below.
   def self._on_method_added(hook_mod, method_name, is_singleton_method: false)
+    if T::Private::DeclState.current.is_re_wrapping
+      T::Private::DeclState.current.is_re_wrapping = false
+      return
+    end
+
     current_declaration = T::Private::DeclState.current.active_declaration
     mod = is_singleton_method ? hook_mod.singleton_class : hook_mod
     original_method = mod.instance_method(method_name)
