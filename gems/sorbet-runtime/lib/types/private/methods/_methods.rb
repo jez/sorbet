@@ -136,7 +136,7 @@ module T::Private::Methods
   #   if A is included or extended by a module B,
   #   then we want B to have the hooks installed on itself
   # should extend this module.
-  module VirallyInstallHooks
+  module TransitivelyInstallHooks
     def included(arg)
       super(arg)
       if arg.is_a?(Module)
@@ -231,7 +231,7 @@ module T::Private::Methods
     @sig_wrappers[key] = sig_block
     if current_declaration.final
       @final_methods.add(key)
-      mod.extend(VirallyInstallHooks)
+      mod.extend(TransitivelyInstallHooks)
     end
   end
 
