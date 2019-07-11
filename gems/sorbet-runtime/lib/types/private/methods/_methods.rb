@@ -167,10 +167,14 @@ module T::Private::Methods
     end
   end
 
+  private_class_method def self.all_instance_methods(mod)
+    mod.instance_methods(false) + mod.private_instance_methods(false)
+  end
+
   # this ensures that for all m in method_names, m is not defined on an ancestor of mod.
   def self._check_final_ancestors(mod, method_names)
     mod.ancestors.each do |ancestor|
-      (ancestor.instance_methods(false) + ancestor.private_instance_methods(false)).each do |ancestor_method|
+      all_instance_methods(ancestor).each do |ancestor_method|
         method_names.each do |method_name|
           if ancestor_method == method_name && final_method?(ancestor.instance_method(method_name))
             if mod == ancestor
