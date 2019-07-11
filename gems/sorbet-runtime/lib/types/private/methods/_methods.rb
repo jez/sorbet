@@ -373,22 +373,27 @@ module T::Private::Methods
     end
   end
 
-  def self.install_hooks(mod)
-    return if @installed_hooks.include?(mod)
-    @installed_hooks << mod
-
-    orig_include = T::Private::ClassUtils.replace_method(mod.singleton_class, :include) do |arg|
-      orig_include.bind(self).call(arg)
+  module CheckFinalAncestors
+    def include(arg)
+      super(arg)
       arg.instance_methods.each do |method_name|
         ::T::Private::Methods._check_final_ancestors(self, method_name)
       end
     end
-    orig_extend = T::Private::ClassUtils.replace_method(mod.singleton_class, :extend) do |arg|
-      orig_extend.bind(self).call(arg)
+
+    def extend(arg)
+      super(arg)
       arg.instance_methods.each do |method_name|
         ::T::Private::Methods._check_final_ancestors(self.singleton_class, method_name)
       end
     end
+  end
+
+  def self.install_hooks(mod)
+    return if @installed_hooks.include?(mod)
+    @installed_hooks << mod
+
+    mod.extend(CheckFinalAncestors)
 
     if mod.singleton_class?
       install_singleton_method_added_hook(mod)
