@@ -168,6 +168,8 @@ module T::Private::Methods
   end
 
   private_class_method def self.all_instance_methods(mod)
+    # the false means the methods from ancestors are not included.
+    # https://ruby-doc.org/core-2.6.3/Module.html#method-i-instance_methods
     mod.instance_methods(false) + mod.private_instance_methods(false)
   end
 
