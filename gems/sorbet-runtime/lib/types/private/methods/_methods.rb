@@ -154,34 +154,28 @@ module T::Private::Methods
   module CheckFinalAncestors
     def include(*args)
       ret = super(*args)
-      args.each do |a|
-        a.instance_methods.each do |method_name|
-          ::T::Private::Methods._check_final_ancestors(self, method_name)
-        end
-      end
+      ::T::Private::Methods._check_final_ancestors(self, args.flat_map(&:instance_methods))
       ret
     end
 
     def extend(*args)
       ret = super(*args)
-      args.each do |a|
-        a.instance_methods.each do |method_name|
-          ::T::Private::Methods._check_final_ancestors(self.singleton_class, method_name)
-        end
-      end
+      ::T::Private::Methods._check_final_ancestors(self.singleton_class, args.flat_map(&:instance_methods))
       ret
     end
   end
 
-  # this ensures there is not a final method named method_name already defined on one of mod's ancestors.
-  def self._check_final_ancestors(mod, method_name)
+  # this ensures that for all m in method_names, m is not defined on an ancestor of mod.
+  def self._check_final_ancestors(mod, method_names)
     mod.ancestors.each do |ancestor|
       (ancestor.instance_methods(false) + ancestor.private_instance_methods(false)).each do |ancestor_method|
-        if ancestor_method == method_name && final_method?(ancestor.instance_method(method_name))
-          if mod == ancestor
-            raise "`#{ancestor.name}##{method_name}` was declared as final and cannot be redefined"
-          else
-            raise "`#{ancestor.name}##{method_name}` was declared as final and cannot be overridden in `#{mod.name}`"
+        method_names.each do |method_name|
+          if ancestor_method == method_name && final_method?(ancestor.instance_method(method_name))
+            if mod == ancestor
+              raise "`#{ancestor.name}##{method_name}` was declared as final and cannot be redefined"
+            else
+              raise "`#{ancestor.name}##{method_name}` was declared as final and cannot be overridden in `#{mod.name}`"
+            end
           end
         end
       end
@@ -208,7 +202,7 @@ module T::Private::Methods
     mod = is_singleton_method ? hook_mod.singleton_class : hook_mod
     original_method = mod.instance_method(method_name)
 
-    _check_final_ancestors(mod, method_name)
+    _check_final_ancestors(mod, [method_name])
 
     return if current_declaration.nil?
     T::Private::DeclState.current.reset!
