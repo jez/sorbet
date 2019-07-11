@@ -139,16 +139,12 @@ module T::Private::Methods
   module TransitivelyInstallHooks
     def included(arg)
       super(arg)
-      if arg.is_a?(Module)
-        ::T::Private::Methods.install_hooks(arg)
-      end
+      ::T::Private::Methods.install_hooks(arg)
     end
 
     def extended(arg)
       super(arg)
-      if arg.is_a?(Module)
-        ::T::Private::Methods.install_hooks(arg)
-      end
+      ::T::Private::Methods.install_hooks(arg)
     end
   end
 
