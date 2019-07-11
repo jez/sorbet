@@ -376,18 +376,22 @@ module T::Private::Methods
   end
 
   module CheckFinalAncestors
-    def include(arg)
-      ret = super(arg)
-      arg.instance_methods.each do |method_name|
-        ::T::Private::Methods._check_final_ancestors(self, method_name)
+    def include(*args)
+      ret = super(*args)
+      args.each do |a|
+        a.instance_methods.each do |method_name|
+          ::T::Private::Methods._check_final_ancestors(self, method_name)
+        end
       end
       ret
     end
 
-    def extend(arg)
-      ret = super(arg)
-      arg.instance_methods.each do |method_name|
-        ::T::Private::Methods._check_final_ancestors(self.singleton_class, method_name)
+    def extend(*args)
+      ret = super(*args)
+      args.each do |a|
+        a.instance_methods.each do |method_name|
+          ::T::Private::Methods._check_final_ancestors(self.singleton_class, method_name)
+        end
       end
       ret
     end
