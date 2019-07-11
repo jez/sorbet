@@ -185,8 +185,7 @@ class Opus::Types::Test::FinalMethodTest < Critic::Unit::UnitTest
     end
     err = assert_raises(RuntimeError) do
       Class.new do
-        include m1
-        include m2
+        include m1, m2
       end
     end
     assert_includes(err.message, "was declared as final and cannot be overridden")
@@ -203,8 +202,7 @@ class Opus::Types::Test::FinalMethodTest < Critic::Unit::UnitTest
     end
     err = assert_raises(RuntimeError) do
       Class.new do
-        extend m1
-        extend m2
+        extend m1, m2
       end
     end
     assert_includes(err.message, "was declared as final and cannot be overridden")
