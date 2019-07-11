@@ -153,7 +153,11 @@ module T::Private::Methods
     mod.ancestors.each do |ancestor|
       (ancestor.instance_methods(false) + ancestor.private_instance_methods(false)).each do |ancestor_method|
         if ancestor_method == method_name && final_method?(ancestor.instance_method(method_name))
-          raise "`#{ancestor.name}##{method_name}` was declared as final and cannot be overridden in `#{mod.name}`"
+          if mod == ancestor
+            raise "`#{ancestor.name}##{method_name}` was declared as final and cannot be redefined"
+          else
+            raise "`#{ancestor.name}##{method_name}` was declared as final and cannot be overridden in `#{mod.name}`"
+          end
         end
       end
     end
@@ -169,9 +173,6 @@ module T::Private::Methods
     mod = is_singleton_method ? hook_mod.singleton_class : hook_mod
     original_method = mod.instance_method(method_name)
 
-    if final_method?(original_method)
-      raise "`#{mod.name}##{method_name}` was declared as final and cannot be redefined"
-    end
     _check_final_ancestors(mod, method_name)
 
     return if current_declaration.nil?
