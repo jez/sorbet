@@ -138,13 +138,15 @@ module T::Private::Methods
   # should extend this module.
   module TransitivelyInstallHooks
     def included(arg)
-      super(arg)
+      ret = super(arg)
       ::T::Private::Methods.install_hooks(arg)
+      ret
     end
 
     def extended(arg)
-      super(arg)
+      ret = super(arg)
       ::T::Private::Methods.install_hooks(arg)
+      ret
     end
   end
 
@@ -375,17 +377,19 @@ module T::Private::Methods
 
   module CheckFinalAncestors
     def include(arg)
-      super(arg)
+      ret = super(arg)
       arg.instance_methods.each do |method_name|
         ::T::Private::Methods._check_final_ancestors(self, method_name)
       end
+      ret
     end
 
     def extend(arg)
-      super(arg)
+      ret = super(arg)
       arg.instance_methods.each do |method_name|
         ::T::Private::Methods._check_final_ancestors(self.singleton_class, method_name)
       end
+      ret
     end
   end
 
