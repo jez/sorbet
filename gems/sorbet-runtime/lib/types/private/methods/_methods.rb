@@ -150,6 +150,7 @@ module T::Private::Methods
     end
   end
 
+  # a module that has a final method on it should extend this module.
   module CheckFinalAncestors
     def include(*args)
       ret = super(*args)
