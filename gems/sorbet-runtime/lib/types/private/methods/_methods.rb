@@ -150,6 +150,28 @@ module T::Private::Methods
     end
   end
 
+  module CheckFinalAncestors
+    def include(*args)
+      ret = super(*args)
+      args.each do |a|
+        a.instance_methods.each do |method_name|
+          ::T::Private::Methods._check_final_ancestors(self, method_name)
+        end
+      end
+      ret
+    end
+
+    def extend(*args)
+      ret = super(*args)
+      args.each do |a|
+        a.instance_methods.each do |method_name|
+          ::T::Private::Methods._check_final_ancestors(self.singleton_class, method_name)
+        end
+      end
+      ret
+    end
+  end
+
   # this ensures there is not a final method named method_name already defined on one of mod's ancestors.
   def self._check_final_ancestors(mod, method_name)
     mod.ancestors.each do |ancestor|
@@ -372,28 +394,6 @@ module T::Private::Methods
       break if @sig_wrappers.empty?
       key, _ = @sig_wrappers.first
       run_sig_block_for_key(key)
-    end
-  end
-
-  module CheckFinalAncestors
-    def include(*args)
-      ret = super(*args)
-      args.each do |a|
-        a.instance_methods.each do |method_name|
-          ::T::Private::Methods._check_final_ancestors(self, method_name)
-        end
-      end
-      ret
-    end
-
-    def extend(*args)
-      ret = super(*args)
-      args.each do |a|
-        a.instance_methods.each do |method_name|
-          ::T::Private::Methods._check_final_ancestors(self.singleton_class, method_name)
-        end
-      end
-      ret
     end
   end
 
