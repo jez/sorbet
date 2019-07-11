@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require_relative '../test_helper'
 
-class Opus::Types::Test::FinalTest < Critic::Unit::UnitTest
+class Opus::Types::Test::FinalMethodTest < Critic::Unit::UnitTest
   after do
     T::Private::DeclState.current.reset!
   end
