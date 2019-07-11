@@ -10,14 +10,30 @@ module T::Private::Methods
   ARG_NOT_PROVIDED = Object.new
   PROC_TYPE = Object.new
 
+  ALLOWED_SIG_ARGS = [].freeze
   DeclarationBlock = Struct.new(:mod, :loc, :blk)
 
-  def self.declare_sig(mod, &blk)
+  def self.declare_sig(mod, args, &blk)
     install_hooks(mod)
 
     if T::Private::DeclState.current.active_declaration
       T::Private::DeclState.current.reset!
       raise "You called sig twice without declaring a method inbetween"
+    end
+
+    ALLOWED_SIG_ARGS.each do |allowed|
+      old_len = args.length
+      args.select! { |a| a != allowed }
+      diff = old_len - args.length
+      if diff == 0
+        next
+      end
+      if diff > 1
+        raise "Duplicate argument to `sig`: #{allowed}"
+      end
+    end
+    if args.length != 0
+      raise "Some arguments to `sig` were invalid: #{args}"
     end
 
     loc = caller_locations(2, 1).first

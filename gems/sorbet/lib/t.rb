@@ -12,7 +12,7 @@
 module T
   module Sig
     module WithoutRuntime
-      def self.sig(&blk); end
+      def self.sig(*args, &blk); end
     end
   end
 
@@ -55,4 +55,3 @@ module T
     def self.[](type); end
   end
 end
-
