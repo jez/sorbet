@@ -167,6 +167,11 @@ module T::Private::Methods
     @final_methods.include?(method_to_key(method))
   end
 
+  private_class_method def self.add_final_method(mod, method_key)
+    @final_methods.add(method_key)
+    mod.extend(TransitivelyInstallHooks)
+  end
+
   # Only public because it needs to get called below inside the replace_method blocks below.
   def self._on_method_added(hook_mod, method_name, is_singleton_method: false)
     current_declaration = T::Private::DeclState.current.active_declaration
@@ -227,8 +232,7 @@ module T::Private::Methods
     key = method_to_key(new_method)
     @sig_wrappers[key] = sig_block
     if current_declaration.final
-      @final_methods.add(key)
-      mod.extend(TransitivelyInstallHooks)
+      add_final_method(mod, key)
     end
   end
 
