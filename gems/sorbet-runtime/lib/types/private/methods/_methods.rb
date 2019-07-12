@@ -156,7 +156,7 @@ module T::Private::Methods
     # the version of ruby that adds the optional argument to method_defined? that allows you to exclude ancestors.
     mod.ancestors.reverse_each do |ancestor|
       method_names.each do |method_name|
-        if ancestor.method_defined?(method_name) && final_method?(ancestor.instance_method(method_name))
+        if ancestor.method_defined?(method_name) && @final_methods.include?(method_to_key(ancestor.instance_method(method_name)))
           raise(
             "`#{ancestor.name}##{method_name}` was declared as final and cannot be " +
             (mod == ancestor ? "redefined" : "overridden in #{mod.name}")
@@ -164,10 +164,6 @@ module T::Private::Methods
         end
       end
     end
-  end
-
-  private_class_method def self.final_method?(method)
-    @final_methods.include?(method_to_key(method))
   end
 
   private_class_method def self.add_final_method(mod, method_key)
