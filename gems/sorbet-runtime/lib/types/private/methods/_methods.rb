@@ -155,7 +155,7 @@ module T::Private::Methods
         if ancestor.method_defined?(method_name) && @final_methods.include?(method_name_and_owner_to_key(method_name, ancestor))
           raise(
             "`#{ancestor.name}##{method_name}` was declared as final and cannot be " +
-            (mod == ancestor ? "redefined" : "overridden in #{mod.name}")
+            (mod == ancestor ? "redefined" : "overridden in `#{mod.name}`")
           )
         end
       end
