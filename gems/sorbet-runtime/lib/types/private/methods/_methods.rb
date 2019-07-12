@@ -167,23 +167,17 @@ module T::Private::Methods
     end
   end
 
-  private_class_method def self.all_instance_methods(mod)
-    # the false means the methods from ancestors are not included.
-    # https://ruby-doc.org/core-2.6.3/Module.html#method-i-instance_methods
-    mod.instance_methods(false) + mod.private_instance_methods(false)
-  end
-
   # this ensures that for all m in method_names, m is not defined on an ancestor of mod.
   def self._check_final_ancestors(mod, method_names)
-    mod.ancestors.each do |ancestor|
-      all_instance_methods(ancestor).each do |ancestor_method|
-        method_names.each do |method_name|
-          if ancestor_method == method_name && final_method?(ancestor.instance_method(method_name))
-            raise(
-              "`#{ancestor.name}##{method_name}` was declared as final and cannot be " +
-              (mod == ancestor ? "redefined" : "overridden in #{mod.name}")
-            )
-          end
+    # use reverse_each to check farther-up ancestors first, for better error messages. we could avoid this if we were on
+    # the version of ruby that adds the optional argument to method_defined? that allows you to exclude ancestors.
+    mod.ancestors.reverse_each do |ancestor|
+      method_names.each do |method_name|
+        if ancestor.method_defined?(method_name) && final_method?(ancestor.instance_method(method_name))
+          raise(
+            "`#{ancestor.name}##{method_name}` was declared as final and cannot be " +
+            (mod == ancestor ? "redefined" : "overridden in #{mod.name}")
+          )
         end
       end
     end
