@@ -152,7 +152,7 @@ module T::Private::Methods
     # the version of ruby that adds the optional argument to method_defined? that allows you to exclude ancestors.
     mod.ancestors.reverse_each do |ancestor|
       method_names.each do |method_name|
-        if ancestor.method_defined?(method_name) && @final_methods.include?(method_name_and_owner_to_key(method_name, ancestor))
+        if ancestor.method_defined?(method_name) && @final_methods.include?(method_owner_and_name_to_key(ancestor, method_name))
           raise(
             "`#{ancestor.name}##{method_name}` was declared as final and cannot be " +
             (mod == ancestor ? "redefined" : "overridden in `#{mod.name}`")
@@ -401,12 +401,12 @@ module T::Private::Methods
   end
 
   # use this directly if you don't want/need to box up the method into an object to pass to method_to_key.
-  private_class_method def self.method_name_and_owner_to_key(name, owner)
+  private_class_method def self.method_owner_and_name_to_key(owner, name)
     "#{owner.object_id}##{name}"
   end
 
   private_class_method def self.method_to_key(method)
-    method_name_and_owner_to_key(method.name, method.owner)
+    method_owner_and_name_to_key(method.owner, method.name)
   end
 
   private_class_method def self.key_to_method(key)
