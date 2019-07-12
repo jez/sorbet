@@ -115,37 +115,6 @@ module T::Private::Methods
     @signatures_by_method[key]
   end
 
-  # a module that has a final method on it should extend this module.
-  module CheckFinalAncestors
-    def included(arg)
-      super(arg)
-      ::T::Private::Methods.install_hooks(arg)
-    end
-
-    def extended(arg)
-      super(arg)
-      ::T::Private::Methods.install_hooks(arg)
-    end
-
-    def include(*args) # rubocop:disable PrisonGuard/BanBuiltinMethodOverride
-      ancestors = self.ancestors
-      super(*args)
-      args.each do |a|
-        ::T::Private::Methods._check_final_ancestors(self, ancestors, a.instance_methods)
-        ancestors << a
-      end
-    end
-
-    def extend(*args) # rubocop:disable PrisonGuard/BanBuiltinMethodOverride
-      ancestors = self.ancestors
-      super(*args)
-      args.each do |a|
-        ::T::Private::Methods._check_final_ancestors(self, ancestors, a.instance_methods)
-        ancestors << a
-      end
-    end
-  end
-
   # when `mod` includes a module with instance methods `method_names`, ensure there is zero intersection between the
   # final instance methods of `mod` and `method_names`. so, for every m in `method_names`, check if there is already a
   # method defined on one of `mod`'s `ancestors` with the same name that is final.
@@ -367,6 +336,37 @@ module T::Private::Methods
       break if @sig_wrappers.empty?
       key, _ = @sig_wrappers.first
       run_sig_block_for_key(key)
+    end
+  end
+
+  # a module that has a final method on it should extend this module.
+  module CheckFinalAncestors
+    def include(*args) # rubocop:disable PrisonGuard/BanBuiltinMethodOverride
+      ancestors = self.ancestors
+      super(*args)
+      args.each do |a|
+        ::T::Private::Methods._check_final_ancestors(self, ancestors, a.instance_methods)
+        ancestors << a
+      end
+    end
+
+    def extend(*args) # rubocop:disable PrisonGuard/BanBuiltinMethodOverride
+      ancestors = self.ancestors
+      super(*args)
+      args.each do |a|
+        ::T::Private::Methods._check_final_ancestors(self, ancestors, a.instance_methods)
+        ancestors << a
+      end
+    end
+
+    def included(arg)
+      super(arg)
+      ::T::Private::Methods.install_hooks(arg)
+    end
+
+    def extended(arg)
+      super(arg)
+      ::T::Private::Methods.install_hooks(arg)
     end
   end
 
