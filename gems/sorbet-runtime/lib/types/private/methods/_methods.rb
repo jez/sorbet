@@ -339,25 +339,26 @@ module T::Private::Methods
     end
   end
 
+  def self._include_extend_impl(mod, ancestors)
+    # use reverse_each because the inclusion happens in reverse order.
+    (mod.ancestors - ancestors).reverse_each do |a|
+      _check_final_ancestors(mod, ancestors, a.instance_methods)
+      ancestors << a
+    end
+  end
+
   # a module that has a final method on it should extend this module.
   module CheckFinalAncestors
     def include(*args) # rubocop:disable PrisonGuard/BanBuiltinMethodOverride
       ancestors = self.ancestors
       super(*args)
-      (self.ancestors - ancestors).each do |a|
-        ::T::Private::Methods._check_final_ancestors(self, ancestors, a.instance_methods)
-        ancestors << a
-      end
+      ::T::Private::Methods._include_extend_impl(self, ancestors)
     end
 
     def extend(*args) # rubocop:disable PrisonGuard/BanBuiltinMethodOverride
       ancestors = self.ancestors
       super(*args)
-      # use reverse_each because the inclusion happens in reverse order.
-      (self.ancestors - ancestors).reverse_each do |a|
-        ::T::Private::Methods._check_final_ancestors(self, ancestors, a.instance_methods)
-        ancestors << a
-      end
+      ::T::Private::Methods._include_extend_impl(self, ancestors)
     end
 
     def included(arg)
