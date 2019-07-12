@@ -287,4 +287,16 @@ class Opus::Types::Test::FinalMethodTest < Critic::Unit::UnitTest
     end
     assert_includes(err.message, "was declared as final and cannot be overridden")
   end
+
+  it "allows including modules again" do
+    m1 = Module.new do
+      extend T::Sig
+      sig(:final) {void}
+      def foo; end
+    end
+    m2 = Module.new do
+      include m1
+      include m1
+    end
+  end
 end

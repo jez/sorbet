@@ -344,7 +344,7 @@ module T::Private::Methods
     def include(*args) # rubocop:disable PrisonGuard/BanBuiltinMethodOverride
       ancestors = self.ancestors
       super(*args)
-      args.each do |a|
+      (self.ancestors - ancestors).each do |a|
         ::T::Private::Methods._check_final_ancestors(self, ancestors, a.instance_methods)
         ancestors << a
       end
@@ -353,7 +353,7 @@ module T::Private::Methods
     def extend(*args) # rubocop:disable PrisonGuard/BanBuiltinMethodOverride
       ancestors = self.ancestors
       super(*args)
-      args.each do |a|
+      (self.ancestors - ancestors).each do |a|
         ::T::Private::Methods._check_final_ancestors(self, ancestors, a.instance_methods)
         ancestors << a
       end
