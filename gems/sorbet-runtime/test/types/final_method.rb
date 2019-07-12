@@ -208,7 +208,7 @@ class Opus::Types::Test::FinalMethodTest < Critic::Unit::UnitTest
     assert_includes(err.message, "was declared as final and cannot be overridden")
   end
 
-  it "permits calling final methods" do
+  it "allows calling final methods" do
     m = Module.new do
       extend T::Sig
       sig(:final) {void}
