@@ -115,11 +115,8 @@ module T::Private::Methods
     @signatures_by_method[key]
   end
 
-  # a module A such that:
-  #   if A is included or extended by a module B,
-  #   then we want B to have the hooks installed on itself
-  # should extend this module.
-  module TransitivelyInstallHooks
+  # a module that has a final method on it should extend this module.
+  module CheckFinalAncestors
     def included(arg)
       super(arg)
       ::T::Private::Methods.install_hooks(arg)
@@ -129,10 +126,7 @@ module T::Private::Methods
       super(arg)
       ::T::Private::Methods.install_hooks(arg)
     end
-  end
 
-  # a module that has a final method on it should extend this module.
-  module CheckFinalAncestors
     def include(*args) # rubocop:disable PrisonGuard/BanBuiltinMethodOverride
       ancestors = self.ancestors
       super(*args)
@@ -173,7 +167,6 @@ module T::Private::Methods
 
   private_class_method def self.add_final_method(mod, method_key)
     @final_methods.add(method_key)
-    mod.extend(TransitivelyInstallHooks)
   end
 
   # Only public because it needs to get called below inside the replace_method blocks below.
