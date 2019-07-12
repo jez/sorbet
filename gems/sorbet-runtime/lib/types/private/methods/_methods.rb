@@ -121,32 +121,28 @@ module T::Private::Methods
   # should extend this module.
   module TransitivelyInstallHooks
     def included(arg)
-      ret = super(arg)
+      super(arg)
       ::T::Private::Methods.install_hooks(arg)
       ::T::Private::Methods._check_final_ancestors(arg, self.instance_methods)
-      ret
     end
 
     def extended(arg)
-      ret = super(arg)
+      super(arg)
       ::T::Private::Methods.install_hooks(arg)
       ::T::Private::Methods._check_final_ancestors(arg.singleton_class, self.instance_methods)
-      ret
     end
   end
 
   # a module that has a final method on it should extend this module.
   module CheckFinalAncestors
     def include(*args)
-      ret = super(*args)
+      super(*args)
       ::T::Private::Methods._check_final_ancestors(self, args.flat_map(&:instance_methods))
-      ret
     end
 
     def extend(*args)
-      ret = super(*args)
+      super(*args)
       ::T::Private::Methods._check_final_ancestors(self.singleton_class, args.flat_map(&:instance_methods))
-      ret
     end
   end
 
