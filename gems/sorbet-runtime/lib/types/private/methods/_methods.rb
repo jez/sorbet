@@ -361,12 +361,16 @@ module T::Private::Methods
 
     def included(arg)
       super(arg)
-      ::T::Private::Methods.install_hooks(arg)
+      if arg.is_a?(Module)
+        ::T::Private::Methods.install_hooks(arg)
+      end
     end
 
     def extended(arg)
       super(arg)
-      ::T::Private::Methods.install_hooks(arg)
+      if arg.is_a?(Module)
+        ::T::Private::Methods.install_hooks(arg)
+      end
     end
   end
 
