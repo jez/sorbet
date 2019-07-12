@@ -123,34 +123,43 @@ module T::Private::Methods
     def included(arg)
       super(arg)
       ::T::Private::Methods.install_hooks(arg)
-      ::T::Private::Methods._check_final_ancestors(arg, self.instance_methods)
     end
 
     def extended(arg)
       super(arg)
       ::T::Private::Methods.install_hooks(arg)
-      ::T::Private::Methods._check_final_ancestors(arg.singleton_class, self.instance_methods)
     end
   end
 
   # a module that has a final method on it should extend this module.
   module CheckFinalAncestors
     def include(*args) # rubocop:disable PrisonGuard/BanBuiltinMethodOverride
+      ancestors = self.ancestors
       super(*args)
-      ::T::Private::Methods._check_final_ancestors(self, args.flat_map(&:instance_methods))
+      args.each do |a|
+        ::T::Private::Methods._check_final_ancestors(self, ancestors, a.instance_methods)
+        ancestors << a
+      end
     end
 
     def extend(*args) # rubocop:disable PrisonGuard/BanBuiltinMethodOverride
+      ancestors = self.ancestors
       super(*args)
-      ::T::Private::Methods._check_final_ancestors(self.singleton_class, args.flat_map(&:instance_methods))
+      args.each do |a|
+        ::T::Private::Methods._check_final_ancestors(self, ancestors, a.instance_methods)
+        ancestors << a
+      end
     end
   end
 
-  # this ensures that for all m in method_names, m is not defined on an ancestor of mod.
-  def self._check_final_ancestors(mod, method_names)
+  # when `mod` includes a module with instance methods `method_names`, ensure there is zero intersection between the
+  # final instance methods of `mod` and `method_names`. so, for every m in `method_names`, check if there is already a
+  # method defined on one of `mod`'s `ancestors` with the same name that is final.
+  def self._check_final_ancestors(mod, ancestors, method_names)
+    p [mod, ancestors.map(&:name), method_names] if mod.name == "c"
     # use reverse_each to check farther-up ancestors first, for better error messages. we could avoid this if we were on
     # the version of ruby that adds the optional argument to method_defined? that allows you to exclude ancestors.
-    mod.ancestors.reverse_each do |ancestor|
+    ancestors.reverse_each do |ancestor|
       method_names.each do |method_name|
         if ancestor.method_defined?(method_name) && @final_methods.include?(method_owner_and_name_to_key(ancestor, method_name))
           raise(
@@ -178,7 +187,7 @@ module T::Private::Methods
     mod = is_singleton_method ? hook_mod.singleton_class : hook_mod
     original_method = mod.instance_method(method_name)
 
-    _check_final_ancestors(mod, [method_name])
+    _check_final_ancestors(mod, mod.ancestors, [method_name])
 
     return if current_declaration.nil?
     T::Private::DeclState.current.reset!
