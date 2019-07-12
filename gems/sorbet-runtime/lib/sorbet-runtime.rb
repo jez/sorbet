@@ -98,3 +98,5 @@ require_relative 'types/props/type_validation'
 require_relative 'types/struct'
 
 require_relative 'types/compatibility_patches'
+
+raise "This is a test."
