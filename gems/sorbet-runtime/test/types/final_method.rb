@@ -270,7 +270,7 @@ class Opus::Types::Test::FinalMethodTest < Critic::Unit::UnitTest
     assert_equal(2, m.calls)
   end
 
-  it "forbid overriding through many levels of include" do
+  it "forbids overriding through many levels of include" do
     m1 = Module.new do
       extend T::Sig
       sig(:final) {void}
