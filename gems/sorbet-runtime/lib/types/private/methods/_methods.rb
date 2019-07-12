@@ -135,12 +135,12 @@ module T::Private::Methods
 
   # a module that has a final method on it should extend this module.
   module CheckFinalAncestors
-    def include(*args)
+    def include(*args) # rubocop:disable PrisonGuard/BanBuiltinMethodOverride
       super(*args)
       ::T::Private::Methods._check_final_ancestors(self, args.flat_map(&:instance_methods))
     end
 
-    def extend(*args)
+    def extend(*args) # rubocop:disable PrisonGuard/BanBuiltinMethodOverride
       super(*args)
       ::T::Private::Methods._check_final_ancestors(self.singleton_class, args.flat_map(&:instance_methods))
     end
