@@ -179,11 +179,10 @@ module T::Private::Methods
       all_instance_methods(ancestor).each do |ancestor_method|
         method_names.each do |method_name|
           if ancestor_method == method_name && final_method?(ancestor.instance_method(method_name))
-            if mod == ancestor
-              raise "`#{ancestor.name}##{method_name}` was declared as final and cannot be redefined"
-            else
-              raise "`#{ancestor.name}##{method_name}` was declared as final and cannot be overridden in `#{mod.name}`"
-            end
+            raise(
+              "`#{ancestor.name}##{method_name}` was declared as final and cannot be " +
+              (mod == ancestor ? "redefined" : "overridden in #{mod.name}")
+            )
           end
         end
       end
