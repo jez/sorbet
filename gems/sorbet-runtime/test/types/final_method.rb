@@ -269,4 +269,22 @@ class Opus::Types::Test::FinalMethodTest < Critic::Unit::UnitTest
     end
     assert_equal(2, m.calls)
   end
+
+  it "forbid overriding through many levels of include" do
+    m1 = Module.new do
+      extend T::Sig
+      sig(:final) {void}
+      def foo; end
+    end
+    m2 = Module.new do
+      include m1
+    end
+    err = assert_raises(RuntimeError) do
+      Class.new do
+        include m2
+        def foo; end
+      end
+    end
+    assert_includes(err.message, "was declared as final and cannot be overridden")
+  end
 end
