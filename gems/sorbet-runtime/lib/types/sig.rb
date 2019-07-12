@@ -7,19 +7,19 @@ module T::Sig
   module WithoutRuntime
     # At runtime, does nothing, but statically it is treated exactly the same
     # as T::Sig#sig. Only use it in cases where you can't use T::Sig#sig.
-    def self.sig(*args, &blk); end # rubocop:disable PrisonGuard/BanBuiltinMethodOverride
+    def self.sig(arg=nil, &blk); end # rubocop:disable PrisonGuard/BanBuiltinMethodOverride
 
     # At runtime, does nothing, but statically it is treated exactly the same
     # as T::Sig#sig. Only use it in cases where you can't use T::Sig#sig.
-    T::Sig::WithoutRuntime.sig {params(args: Symbol, blk: T.proc.bind(T::Private::Methods::DeclBuilder).void).void}
-    def self.sig(*args, &blk); end # rubocop:disable PrisonGuard/BanBuiltinMethodOverride, Lint/DuplicateMethods
+    T::Sig::WithoutRuntime.sig {params(arg: T.nilable(Symbol), blk: T.proc.bind(T::Private::Methods::DeclBuilder).void).void}
+    def self.sig(arg=nil, &blk); end # rubocop:disable PrisonGuard/BanBuiltinMethodOverride, Lint/DuplicateMethods
   end
 
   # Declares a method with type signatures and/or
   # abstract/override/... helpers. See the documentation URL on
   # {T::Helpers}
-  T::Sig::WithoutRuntime.sig {params(args: Symbol, blk: T.proc.bind(T::Private::Methods::DeclBuilder).void).void}
-  def sig(*args, &blk) # rubocop:disable PrisonGuard/BanBuiltinMethodOverride
-    T::Private::Methods.declare_sig(self, args, &blk)
+  T::Sig::WithoutRuntime.sig {params(arg: T.nilable(Symbol), blk: T.proc.bind(T::Private::Methods::DeclBuilder).void).void}
+  def sig(arg=nil, &blk) # rubocop:disable PrisonGuard/BanBuiltinMethodOverride
+    T::Private::Methods.declare_sig(self, arg, &blk)
   end
 end
